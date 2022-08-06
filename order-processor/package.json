@@ -1,0 +1,19 @@
+{
+  "name": "order-processor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node main.js",
+    "start-mqtt": "node mqtt-server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@nestjs/axios": "^0.1.0",
+    "aedes": "^0.47.0",
+    "express": "^4.18.1",
+    "mqtt": "^4.3.7"
+  }
+}
