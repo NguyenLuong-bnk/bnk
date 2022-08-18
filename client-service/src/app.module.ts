@@ -9,7 +9,7 @@ import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({ // method forRoot
+    TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
       port: 3306,
@@ -17,9 +17,12 @@ import { OrderModule } from './order/order.module';
       password: '',
       database: 'bt_bnk',
       entities: entities,
-      synchronize: true, // xác định csdl có tự đồng bộ nếu entities thay đổi hay không
+      // synchronize: true,
     }),
-    UsersModule, AuthModule, OrderModule],
+    UsersModule,
+    AuthModule,
+    OrderModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

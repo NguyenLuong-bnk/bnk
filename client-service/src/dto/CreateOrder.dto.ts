@@ -2,11 +2,8 @@ import { IsNotEmpty } from 'class-validator';
 
 export class CreateOrderDto {
   @IsNotEmpty()
-  from: string;
+  to: number;
 
   @IsNotEmpty()
-  to: string;
-
-  @IsNotEmpty()
-  amount: string;
+  amount: number;
 }

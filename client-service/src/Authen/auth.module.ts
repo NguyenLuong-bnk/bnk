@@ -11,17 +11,17 @@ import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
-      UsersModule,
-      PassportModule,
-      JwtModule.register({
-        secret: 'SECRET',
-        signOptions: { expiresIn: '60s' },
-      }),
-      TypeOrmModule.forFeature([User, Order]),
-      HttpModule,
-    ],
+    UsersModule,
+    PassportModule,
+    JwtModule.register({
+      secret: 'SECRET',
+      signOptions: { expiresIn: '1d' },
+    }),
+    TypeOrmModule.forFeature([User, Order]),
+    HttpModule,
+  ],
 
   providers: [AuthService, LocalStrategy, JwtStrategy],
-  exports: [AuthService]
+  exports: [AuthService],
 })
 export class AuthModule {}

@@ -5,14 +5,13 @@ import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([Order]) ],
+  imports: [TypeOrmModule.forFeature([Order])],
   controllers: [OrderController],
-  providers:
-    [
-      {
-        provide: 'ORDER_SERVICE',
-        useClass: OrderService,
-      },
-    ],
+  providers: [
+    {
+      provide: 'ORDER_SERVICE',
+      useClass: OrderService,
+    },
+  ],
 })
 export class OrderModule {}

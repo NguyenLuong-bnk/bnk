@@ -1,49 +1,34 @@
 import { CreateOrderDto } from '../dto/CreateOrder.dto';
 import { Order } from '../typeorm';
 import { HttpService } from '@nestjs/axios';
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Req,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User as UserEntity } from '../typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from '../dto/CreateUser.dto';
 import { encodePassword } from '../users/bcrypt';
 import { DeleteResult } from 'typeorm';
-import { map, Observable, tap } from 'rxjs';
-import { AxiosResponse } from 'axios';
+import { map, tap } from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(UserEntity) // 
+    @InjectRepository(UserEntity)
     private readonly userRespository: Repository<UserEntity>,
 
     @InjectRepository(Order)
     private readonly orderRespository: Repository<Order>,
 
-     @Inject('MATH_SERVICE') private client: ClientProxy,
+    @Inject('MATH_SERVICE') private client: ClientProxy,
     private readonly httpService: HttpService,
   ) {}
-
-  findAll(createOrderDto: CreateOrderDto): Observable<AxiosResponse> {
-    //console.log(createOrderDto);
-    return this.httpService
-      .post('http://localhost:6012/process', { ...createOrderDto })
-      .pipe(
-          map((resp) => resp.data),
-          tap((data) => 
-            {
-              const order = this.orderRespository.create({
-                ...data,
-              });
-              this.orderRespository.save(order);
-              console.log(data)
-              this.client.emit('notifications','The transaction was successful')
-            }         
-          )       
-        )
-  }
-
 
   getUsers() {
     return this.userRespository.find();
@@ -51,14 +36,11 @@ export class UsersService {
 
   createUser(createUserDto: CreateUserDto) {
     const password = encodePassword(createUserDto.password);
-    console.log(password);
     const newUser = this.userRespository.create({ ...createUserDto, password });
     return this.userRespository.save(newUser);
   }
 
   async update(id, createUserDto: CreateUserDto) {
-    // console.log(createUserDto);
-    // console.log(id);
     const password = encodePassword(createUserDto.password);
     const user = await this.userRespository.create({
       ...createUserDto,
@@ -71,9 +53,79 @@ export class UsersService {
     return await this.userRespository.delete(id);
   }
 
-  async findOne(username: string) {
+  async findUserByUsername(username: string) {
     return this.userRespository.findOne({
       where: { username: username },
+    });
+  }
+
+  // transferReceiver
+  async transferReceiver(id: number, amount: number) {
+    const userReceiver = await this.userRespository.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    const balance = userReceiver.balance + amount;
+    return this.userRespository.update(+id, { balance });
+  }
+
+  // transferSender
+  async transferSender(id: number, amount: number) {
+    const userSender = await this.userRespository.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (userSender.balance >= amount) {
+      const balance = userSender.balance - amount;
+      return this.userRespository.update(+id, { balance });
+    }
+    throw new HttpException('', HttpStatus.BAD_REQUEST);
+  }
+
+  async creatOrder(
+    createOrderDto: CreateOrderDto,
+    @Req() req: any,
+  ): Promise<any> {
+    const userIdTo = await this.userRespository.findOne({
+      where: {
+        id: createOrderDto.to,
+      },
+    });
+
+    if (!userIdTo) {
+      throw new HttpException('userSender NOT FOUND', HttpStatus.NOT_FOUND);
+    }
+
+    const userId = req.user.userId;
+    const userToId = userIdTo.id;
+    const amount = createOrderDto.amount;
+    const createOrder = { userId, userToId, amount };
+
+    await this.transferReceiver(userToId, amount);
+    await this.transferSender(userId, amount);
+
+    return this.httpService
+      .post('http://localhost:6012/process', { ...createOrder })
+      .pipe(
+        map((resp) => resp.data),
+        tap((data) => {
+          console.log('data:', data);
+          this.orderRespository.save(data);
+          this.client.emit('notifications', 'The transaction was successful');
+        }),
+      );
+  }
+
+  // search history by id
+  async findOrderById(userId: number) {
+    return await this.orderRespository.find({
+      where: {
+        userId: userId,
+      },
     });
   }
 }

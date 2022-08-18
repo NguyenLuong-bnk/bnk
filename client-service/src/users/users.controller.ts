@@ -1,4 +1,3 @@
-import { CreateOrderDto } from '../dto/CreateOrder.dto';
 import {
   Controller,
   Post,
@@ -10,18 +9,19 @@ import {
   Get,
   Param,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../dto/CreateUser.dto';
 import { JwtAuthGuard } from '../Authen/jwt-auth.guard';
-
+import { CreateOrderDto } from 'src/dto/CreateOrder.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('users')
+// @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(
-    private readonly userService: UsersService,
-  ) {}
+  constructor(private readonly userService: UsersService) {}
 
   @Get('')
   getUser() {
@@ -35,8 +35,8 @@ export class UsersController {
   }
 
   @Delete(':id')
-  deleteUser(@Param() params) {
-    return this.userService.delete(params.id);
+  deleteUser(@Param('id') id: number) {
+    return this.userService.delete(id);
   }
 
   @UsePipes(ValidationPipe)
@@ -44,11 +44,17 @@ export class UsersController {
   update(@Param('id') id: number, @Body() createUserDto: CreateUserDto) {
     return this.userService.update(id, createUserDto);
   }
- 
+
   @UseGuards(JwtAuthGuard)
   @Post('test')
-  test( @Body() createOrderDto: CreateOrderDto){
-     return this.userService.findAll(createOrderDto)
+  @ApiBearerAuth('access-token')
+  test(@Body() createOrderDto: CreateOrderDto, @Req() req: any) {
+    //console.log('req user',req.user);
+    return this.userService.creatOrder(createOrderDto, req);
   }
 
+  @Get(':userId')
+  async findOrder(@Param('userId') userId: number) {
+    return await this.userService.findOrderById(userId);
+  }
 }

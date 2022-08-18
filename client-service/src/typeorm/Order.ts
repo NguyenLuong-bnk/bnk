@@ -1,24 +1,28 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { User } from './User';
 
 @Entity()
 export class Order {
-    @PrimaryGeneratedColumn({
-      type: 'bigint',
-    })
-    id: number;
+  @PrimaryGeneratedColumn({
+    type: 'bigint',
+  })
+  id: number;
 
-    @Column()
-    from:string;
+  @Column()
+  userToId: number;
 
-    @Column()
-    to:string;
+  @Column()
+  userId: number;
 
-    @Column()
-    amount: string;
+  @Column()
+  amount: number;
 
-    @Column()
-    orderId: string;
+  @Column()
+  orderId: string;
 
-    @Column()
-    isSuccess: boolean;
+  @Column()
+  isSuccess: boolean;
+
+  @ManyToOne(() => User, (user) => user.orders)
+  user: User;
 }
